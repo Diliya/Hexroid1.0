@@ -8,6 +8,9 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -20,11 +23,14 @@ import java.util.TimerTask;
 
 public class PreActivity extends AppCompatActivity {
     private PackageManager mPackageManager;//用于判断termux是否存在
+    private Process su;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pre);
 
+        TextView txtReport = (TextView) findViewById(R.id.txtReport);
+        txtReport.setMovementMethod(ScrollingMovementMethod.getInstance());//为了实现文本框的自动滚动
         //先检测是否第一次使用，项目是否生成
 
         //设置启动图片
@@ -32,13 +38,19 @@ public class PreActivity extends AppCompatActivity {
         //检测是否安装了termux
         if (!termuxStatus())
         {
-
+            textUpdate(txtReport,"\n"+"未检测到Termux！Hexoid1.0需要调用Termux才能使用！");
             gotoAppShop(this, "com.termux");
             this.finish();
         }
         else
         {
+            textUpdate(txtReport,"\n"+"检测到Termux！");
+            boolean b = useTermux();
+            if (b)
+            {
 
+
+            }
         }
         //计时跳转至新页面
         Timer timer=new Timer();
@@ -51,6 +63,18 @@ public class PreActivity extends AppCompatActivity {
             }
         };
         //timer.schedule(timerTask,5000);
+    }
+    //开始使用Termux
+    private boolean useTermux() {
+        return false;
+    }
+
+    //    初始化termux环境
+    public void initTermuxEnv() throws IOException {
+
+        String cmdStr = "cd /data/data/com.termux/files/home;export PATH=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:$PATH;export LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib:$LD_LIBRARY_PATH;tmpuid=`stat -c \"%U\" /data/data/com.termux/files/home`;\n";
+        Log.v("initTermuxEnv", "initTermuxEnv");
+
     }
     //检测termux安装状态
     public boolean termuxStatus () {
@@ -102,6 +126,15 @@ public class PreActivity extends AppCompatActivity {
                 return true;
         }
         return false;
+    }
+    /**
+     * 获取指定App的目录
+     */
+    public static String getAppPath()
+    {
+        String appPath = "";
+
+        return appPath;
     }
     /**
      * 执行指定的终端指令
@@ -187,5 +220,25 @@ public class PreActivity extends AppCompatActivity {
         }
 
         return content.toString();
+    }
+    /**
+     * Textview文本框内容添加
+     * @param tv 文本框
+     * @param str 添加的文本
+     */
+    private static  boolean textUpdate(TextView tv, String str)
+    {
+        try {
+            tv.append(str);
+            //将TextView滚动到最后一行
+            int offset=tv.getLineCount()*tv.getLineHeight();
+            if(offset>(tv.getHeight()-tv.getLineHeight()-20)){
+                tv.scrollTo(0,offset-tv.getHeight()+tv.getLineHeight()+20);
+            }
+            return true;
+        }
+        catch (Exception ex){
+            return false;
+        }
     }
 }
